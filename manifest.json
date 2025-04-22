@@ -1,0 +1,33 @@
+{
+    "name": "QList",
+    "version": "1.0.0",
+    "manifest_version": 3,
+    "description": "帮助用户标记和收集不理解的专业术语",
+    "permissions": [
+        "contextMenus",
+        "activeTab",
+        "tabs",
+        "scripting",
+        "windows",
+        "storage"
+    ],
+    "action": {
+        "default_popup": "src/popup/popup.html"
+    },
+    "background": {
+        "service_worker": "src/background.js"
+    },
+    "content_scripts": [
+        { 
+            "matches": [
+                "https://kimi.moonshot.cn/*",
+                "https://chatgpt.com/*",
+                "https://x.com/i/grok/*",
+                "https://gemini.google.com/*",
+                "https://chat.deepseek.com/*"
+            ],
+            "js": ["src/content.js"],
+            "css": ["src/styles/content.css"]
+        }
+    ]
+}
