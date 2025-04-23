@@ -162,6 +162,13 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
+// Shift + s 快捷键打开侧边栏
+document.addEventListener("keydown", (event) => {
+    if(event.shiftKey && event.key.toLocaleLowerCase() === 's') {
+        createSidebar();
+    }
+});
+
 // 监听 popup 或 background 的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if(message.action === "showSidebar") {
