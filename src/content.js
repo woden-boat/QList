@@ -13,45 +13,43 @@ function showSavedNotification(text) {
 function createSidebar() {
     if(document.getElementById("qlist-sidebar")) return;
 
-    // 创建包装器
-    const wrapper = document.createElement('div');
-    wrapper.className = 'qlist-wrapper';
+    const SIDEBAR_WIDTH = 220; // 与CSS保持一致
 
-    // 将原始内容移入包装器
-    while (document.body.firstChild) {
-        wrapper.appendChild(document.body.firstChild);
-    }
+    // 让 body 不出现横向滚动条
+    document.body.style.overflowX = 'hidden';
 
+    // 打开时挤压内容
+    wrapper.classList.add('sidebar-open');
+    
     // 创建侧边栏
-    const sidebar = document.createElement('div');
-    sidebar.id = 'qlist-sidebar';
-    sidebar.className = 'qlist-sidebar';
-
-    // 关闭按钮点击时
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '关闭';
-    closeBtn.className = 'qlist-close-btn';
-    closeBtn.onclick = () => {
-        sidebar.remove();
-        // 恢复原始布局
-        wrapper.classList.add('sidebar-closed');
-        setTimeout(() => {
-            while (wrapper.firstChild) {
-                document.body.appendChild(wrapper.firstChild);
-            }
-            wrapper.remove();
-        }, 300); // 等待过渡动画完成
-        chrome.runtime.sendMessage({ action: "sidebarClosed" });
-    };
-    sidebar.appendChild(closeBtn);
-
-    const listDiv = document.createElement('div');
-    listDiv.id = 'qlist-sidebar-list';
-    listDiv.className = 'qlist-terms-list';
-    sidebar.appendChild(listDiv);
-
-    document.body.appendChild(sidebar);
-    document.body.appendChild(wrapper);
+    let sidebar = document.getElementById('qlist-sidebar');
+    if (!sidebar) {
+        sidebar = document.createElement('div');
+        sidebar.id = 'qlist-sidebar';
+        sidebar.className = 'qlist-sidebar';
+        
+        // 关闭按钮
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '关闭';
+        closeBtn.className = 'qlist-close-btn';
+        closeBtn.onclick = () => {
+            sidebar.remove();
+            wrapper.classList.remove('sidebar-open');
+            setTimeout(() => {
+                document.body.style.overflowX = '';
+            }, 300);
+            chrome.runtime.sendMessage({ action: "sidebarClosed" });
+        };
+        sidebar.appendChild(closeBtn);
+        
+        // 术语列表
+        const listDiv = document.createElement('div');
+        listDiv.id = 'qlist-sidebar-list';
+        listDiv.className = 'qlist-terms-list';
+        sidebar.appendChild(listDiv);
+        
+        document.body.appendChild(sidebar);
+    }
     
     chrome.runtime.sendMessage({ action: "sidebarOpened", url: location.href });
     renderSidebarTerms();
@@ -61,7 +59,7 @@ function createSidebar() {
 function renderSidebarTerms() {
     const listDiv = document.getElementById('qlist-sidebar-list');
     if (!listDiv) return;  // 确保 listDiv 存在
-
+    
     chrome.runtime.sendMessage({ action: "getTerms" }, (response) => {
         const terms = response.terms || [];
         if (terms.length === 0) {
@@ -72,18 +70,18 @@ function renderSidebarTerms() {
         terms.forEach((term, index) => {
             html += `
             <li class="qlist-term-item">
-                <div class="qlist-term-text">${term.text}</div>
-                <div class="qlist-term-time">${new Date(term.timestamp).toLocaleString()}</div>
-                <div class="qlist-term-actions">
-                    <button data-term="${encodeURIComponent(term.text)}" class="qlist-btn qlist-btn-copy">复制</button>
-                    <button data-term="${encodeURIComponent(term.text)}" class="qlist-btn qlist-btn-search">搜索</button>
-                    <button data-index="${index}" class="qlist-btn qlist-btn-delete">删除</button>
-                </div>
+            <div class="qlist-term-text">${term.text}</div>
+            <div class="qlist-term-time">${new Date(term.timestamp).toLocaleString()}</div>
+            <div class="qlist-term-actions">
+            <button data-term="${encodeURIComponent(term.text)}" class="qlist-btn qlist-btn-copy">复制</button>
+            <button data-term="${encodeURIComponent(term.text)}" class="qlist-btn qlist-btn-search">搜索</button>
+            <button data-index="${index}" class="qlist-btn qlist-btn-delete">删除</button>
+            </div>
             </li>`;
         });
         html += "</ul>";
         listDiv.innerHTML = html;
-
+        
         // 绑定按钮事件
         listDiv.querySelectorAll('.qlist-btn-copy').forEach(btn => {
             btn.onclick = function() {
@@ -104,7 +102,7 @@ function renderSidebarTerms() {
                 });
             };
         });
-
+        
         listDiv.querySelectorAll('.qlist-btn-search').forEach(btn => {
             btn.onclick = function() {
                 const term = decodeURIComponent(this.dataset.term);
@@ -119,7 +117,7 @@ function renderSidebarTerms() {
                 });
             };
         });
-
+        
         // 添加按钮悬停效果
         const addButtonHoverEffects = (selector, hoverBg, hoverColor) => {
             listDiv.querySelectorAll(selector).forEach(btn => {
@@ -136,7 +134,7 @@ function renderSidebarTerms() {
                 btn.dataset.defaultColor = getComputedStyle(btn).color;
             });
         };
-
+        
         // 应用悬停效果
         addButtonHoverEffects('.qlist-btn-copy', '#1976d2', '#fff');
         addButtonHoverEffects('.qlist-btn-search', '#2e7d32', '#fff');
@@ -145,6 +143,18 @@ function renderSidebarTerms() {
 }
 
 console.log("内容脚本已注入到页面");
+
+// 查找或创建内容容器
+let wrapper = document.querySelector('.qlist-wrapper');
+if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.className = 'qlist-wrapper';
+    // 把body下所有节点移入wrapper
+    while (document.body.firstChild) {
+        wrapper.appendChild(document.body.firstChild);
+    }
+    document.body.appendChild(wrapper);
+}
 
 // Alt+S 快捷键保存选中文本到本tab sidebar
 document.addEventListener("keydown", (event) => {

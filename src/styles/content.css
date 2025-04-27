@@ -166,13 +166,20 @@
     position: absolute;
     top: 0;
     left: 0;
-    right: 320px;  /* 给侧边栏留出空间 */
+    right: 0; /* 默认不挤压 */
+    width: 100vw;
     min-height: 100vh;
-    transition: right 0.3s ease;
-    overflow-x: hidden;  /* 防止水平滚动 */
+    transition: right 0.3s, width 0.3s;
+    overflow-x: auto;
+}
+
+.qlist-wrapper.sidebar-open {
+    right: 225px;
+    width: calc(100vw - 225px);
 }
 
 /* 当侧边栏关闭时恢复原始内容宽度 */
 .qlist-wrapper.sidebar-closed {
     right: 0;
+    width: 100vw;
 }
